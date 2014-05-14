@@ -1,28 +1,39 @@
 package client;
 import interfaces.TestServerInterface;
+import interfaces.LoginInterface;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.net.MalformedURLException;
 import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Scanner;
 
-import org.apache.log4j.BasicConfigurator;
-
-import com.healthmarketscience.rmiio.RemoteInputStreamServer;
-import com.healthmarketscience.rmiio.SimpleRemoteInputStream;
-
 public class RMIDemoClient {
-	private static final String SERVER_URL = "rmi://localhost/TestServer";
-	private static TestServerInterface serverAPI;
+	private static final String SERVER_URL = "rmi://localhost/TestLoginServer";
+	private static TestServerInterface server;
+	private static LoginInterface loginServer;
 	private static Scanner scan;
 	
 	public static void main(String[] args) {
+		try {
+			loginServer = (LoginInterface) Naming.lookup(SERVER_URL);
+		} catch (MalformedURLException | RemoteException | NotBoundException e) {
+			e.printStackTrace();
+		}
 		
+		attemptLogin();
+		
+		try {
+			String message = server.addUser("Ed", "Cheba");
+			
+			System.out.println(message);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		} catch (SecurityException e) {
+			System.out.println(e.getMessage());
+		}
+		
+		/*
 		BasicConfigurator.configure();
 		
 		String file = "./test.txt";
@@ -43,8 +54,7 @@ public class RMIDemoClient {
 			ex.printStackTrace();
 		} 
 		
-		/*
-		 * 		boolean connected = false;
+		boolean connected = false;
 		
 		scan = new Scanner(System.in);
 		
@@ -83,6 +93,20 @@ public class RMIDemoClient {
 		*/
 	}
 	
+	private static void attemptLogin() {
+		System.out.println("-------- TRYING LOGIN --------");
+		try {
+			server = (TestServerInterface) loginServer.login("Charlie", "letmein");
+			System.out.println("---------- LOGIN OK ----------\n");
+		} catch (SecurityException e) {
+			System.out.println("Password is incorrect! Exiting...");
+			System.exit(-1);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/*
 	private static boolean connectToServer(String name) {
 		String reply = "";
 		
@@ -101,4 +125,5 @@ public class RMIDemoClient {
 			return false;
 		} 
 	}
+	*/
 }
